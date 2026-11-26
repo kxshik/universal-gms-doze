@@ -47,3 +47,14 @@ if [ -f "$DEVICEIDLE_XML" ]; then
         restorecon "$DEVICEIDLE_XML" 2>/dev/null
     fi
 fi
+
+# --- Bind-mount fallback (for rootless-mount / no-metamodule setups) ---
+MODDIR="${0%/*}"
+find "$MODDIR" -type f -name "*.xml" 2>/dev/null |
+while IFS= read -r SRC; do
+    REL="${SRC#$MODDIR}"
+    if [ -f "$REL" ] && grep -qE "allow-in-power-save.*$GMS_PKG|allow-in-data-usage-save.*$GMS_PKG|allow-unthrottled-location.*$GMS_PKG|allow-ignore-location-settings.*$GMS_PKG" "$REL" 2>/dev/null; then
+        chcon --reference="$REL" "$SRC" 2>/dev/null
+        mount --bind "$SRC" "$REL" 2>/dev/null
+    fi
+done

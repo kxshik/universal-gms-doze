@@ -77,8 +77,10 @@ dbg "--- end sysconfig scan ---"
 # --- deviceidle.xml cleanup and un-wl injection ---
 dbg "--- deviceidle.xml patch ---"
 if [ -f "$DEVICEIDLE_XML" ]; then
-    HAS_WL="$(grep -c "<wl n=\"$GMS_PKG\"" "$DEVICEIDLE_XML" 2>/dev/null || echo 0)"
-    HAS_UNWL="$(grep -c "<un-wl n=\"$GMS_PKG\"" "$DEVICEIDLE_XML" 2>/dev/null || echo 0)"
+    HAS_WL=$(grep -c "<wl n=\"$GMS_PKG\"" "$DEVICEIDLE_XML" 2>/dev/null)
+    : "${HAS_WL:=0}"
+    HAS_UNWL=$(grep -c "<un-wl n=\"$GMS_PKG\"" "$DEVICEIDLE_XML" 2>/dev/null)
+    : "${HAS_UNWL:=0}"
     dbg "  <wl> entries for GMS: $HAS_WL"
     dbg "  <un-wl> entries for GMS: $HAS_UNWL"
 
@@ -86,7 +88,8 @@ if [ -f "$DEVICEIDLE_XML" ]; then
         dbg "  Removing <wl n=\"$GMS_PKG\"> ..."
         sed -i "/<wl n=\"$GMS_PKG\"/d" "$DEVICEIDLE_XML"
         restorecon "$DEVICEIDLE_XML" 2>/dev/null
-        AFTER_WL="$(grep -c "<wl n=\"$GMS_PKG\"" "$DEVICEIDLE_XML" 2>/dev/null || echo 0)"
+        AFTER_WL=$(grep -c "<wl n=\"$GMS_PKG\"" "$DEVICEIDLE_XML" 2>/dev/null)
+        : "${AFTER_WL:=0}"
         dbg "  <wl> entries after removal: $AFTER_WL"
     fi
 
@@ -94,7 +97,8 @@ if [ -f "$DEVICEIDLE_XML" ]; then
         dbg "  Injecting <un-wl n=\"$GMS_PKG\" /> ..."
         sed -i "s|</config>|  <un-wl n=\"$GMS_PKG\" />\n</config>|" "$DEVICEIDLE_XML"
         restorecon "$DEVICEIDLE_XML" 2>/dev/null
-        AFTER_UNWL="$(grep -c "<un-wl n=\"$GMS_PKG\"" "$DEVICEIDLE_XML" 2>/dev/null || echo 0)"
+        AFTER_UNWL=$(grep -c "<un-wl n=\"$GMS_PKG\"" "$DEVICEIDLE_XML" 2>/dev/null)
+        : "${AFTER_UNWL:=0}"
         dbg "  <un-wl> entries after injection: $AFTER_UNWL"
     else
         dbg "  <un-wl> already present -- skipping injection"
@@ -112,5 +116,21 @@ dbg "--- end deviceidle.xml patch ---"
 dbg "--- SELinux context of deviceidle.xml ---"
 ls -Z "$DEVICEIDLE_XML" 2>/dev/null >> "$DEBUG_LOG"
 dbg "---"
+
+# --- Bind-mount fallback (for rootless-mount / no-metamodule setups) ---
+dbg "--- Bind-mount fallback ---"
+find "$MODDIR" -type f -name "*.xml" 2>/dev/null |
+while IFS= read -r SRC; do
+    REL="${SRC#$MODDIR}"
+    if [ -f "$REL" ] && grep -qE "allow-in-power-save.*$GMS_PKG|allow-in-data-usage-save.*$GMS_PKG|allow-unthrottled-location.*$GMS_PKG|allow-ignore-location-settings.*$GMS_PKG" "$REL" 2>/dev/null; then
+        chcon --reference="$REL" "$SRC" 2>/dev/null
+        if mount --bind "$SRC" "$REL" 2>/dev/null; then
+            dbg "  [OK] bind-mounted $SRC -> $REL"
+        else
+            dbg "  [FAIL] bind-mount failed: $SRC -> $REL"
+        fi
+    fi
+done
+dbg "--- end bind-mount fallback ---"
 
 dbg "=== post-fs-data.sh complete ==="
