@@ -1,4 +1,8 @@
 ## Change Log:
+- 1.9.12
+Always mirror partition overlays to $MODPATH/system/ for universal compatibility (Magisk, Meta-OverlayFS, Magic Mount, Mountify)
+Fix grep -c double-zero bug in post-fs-data-debug.sh
+
 - 1.9.11
 Fix for mountify
 

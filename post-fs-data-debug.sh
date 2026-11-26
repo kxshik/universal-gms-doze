@@ -77,8 +77,10 @@ dbg "--- end sysconfig scan ---"
 # --- deviceidle.xml cleanup and un-wl injection ---
 dbg "--- deviceidle.xml patch ---"
 if [ -f "$DEVICEIDLE_XML" ]; then
-    HAS_WL="$(grep -c "<wl n=\"$GMS_PKG\"" "$DEVICEIDLE_XML" 2>/dev/null || echo 0)"
-    HAS_UNWL="$(grep -c "<un-wl n=\"$GMS_PKG\"" "$DEVICEIDLE_XML" 2>/dev/null || echo 0)"
+    HAS_WL=$(grep -c "<wl n=\"$GMS_PKG\"" "$DEVICEIDLE_XML" 2>/dev/null)
+    : "${HAS_WL:=0}"
+    HAS_UNWL=$(grep -c "<un-wl n=\"$GMS_PKG\"" "$DEVICEIDLE_XML" 2>/dev/null)
+    : "${HAS_UNWL:=0}"
     dbg "  <wl> entries for GMS: $HAS_WL"
     dbg "  <un-wl> entries for GMS: $HAS_UNWL"
 
@@ -86,7 +88,8 @@ if [ -f "$DEVICEIDLE_XML" ]; then
         dbg "  Removing <wl n=\"$GMS_PKG\"> ..."
         sed -i "/<wl n=\"$GMS_PKG\"/d" "$DEVICEIDLE_XML"
         restorecon "$DEVICEIDLE_XML" 2>/dev/null
-        AFTER_WL="$(grep -c "<wl n=\"$GMS_PKG\"" "$DEVICEIDLE_XML" 2>/dev/null || echo 0)"
+        AFTER_WL=$(grep -c "<wl n=\"$GMS_PKG\"" "$DEVICEIDLE_XML" 2>/dev/null)
+        : "${AFTER_WL:=0}"
         dbg "  <wl> entries after removal: $AFTER_WL"
     fi
 
@@ -94,7 +97,8 @@ if [ -f "$DEVICEIDLE_XML" ]; then
         dbg "  Injecting <un-wl n=\"$GMS_PKG\" /> ..."
         sed -i "s|</config>|  <un-wl n=\"$GMS_PKG\" />\n</config>|" "$DEVICEIDLE_XML"
         restorecon "$DEVICEIDLE_XML" 2>/dev/null
-        AFTER_UNWL="$(grep -c "<un-wl n=\"$GMS_PKG\"" "$DEVICEIDLE_XML" 2>/dev/null || echo 0)"
+        AFTER_UNWL=$(grep -c "<un-wl n=\"$GMS_PKG\"" "$DEVICEIDLE_XML" 2>/dev/null)
+        : "${AFTER_UNWL:=0}"
         dbg "  <un-wl> entries after injection: $AFTER_UNWL"
     else
         dbg "  <un-wl> already present -- skipping injection"

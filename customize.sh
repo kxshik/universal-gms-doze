@@ -104,22 +104,21 @@ _fixup_partition_layout() {
             fi
         fi
     done
-    if [ -d "/data/adb/modules/mountify" ] || [ -d "/data/adb/mountify" ] || \
-       grep -q "/mnt/vendor/mountify" /proc/mounts 2>/dev/null; then
-        log_doze "[OK] mountify detected -- mirroring overlays to \$MODPATH/system/"
-        for _p in $_PARTITIONS; do
-            p="${_p#/}"
-            if [ -d "$_MODDIR/$p" ] && [ ! -L "$_MODDIR/$p" ] && \
-               [ ! -e "$_MODDIR/system/$p" ]; then
-                mkdir -p "$_MODDIR/system/$p"
-                if cp -af "$_MODDIR/$p/." "$_MODDIR/system/$p/" 2>/dev/null; then
-                    log_doze "[OK] mirrored \$MODPATH/$p -> \$MODPATH/system/$p"
-                else
-                    log_doze "[WARN] mirror failed for /$p"
-                fi
+    # Mirror top-level partition overlays to $MODPATH/system/ so Magisk,
+    # Meta-OverlayFS, Magic Mount, and Mountify all find them.
+    for _p in $_PARTITIONS; do
+        p="${_p#/}"
+        [ "$p" = "system" ] && continue
+        if [ -d "$_MODDIR/$p" ] && [ ! -L "$_MODDIR/$p" ] && \
+           [ ! -e "$_MODDIR/system/$p" ]; then
+            mkdir -p "$_MODDIR/system/$p"
+            if cp -af "$_MODDIR/$p/." "$_MODDIR/system/$p/" 2>/dev/null; then
+                log_doze "[OK] mirrored \$MODPATH/$p -> \$MODPATH/system/$p"
+            else
+                log_doze "[WARN] mirror failed for /$p"
             fi
-        done
-    fi
+        fi
+    done
 }
 
 patch_xml() {
