@@ -2,449 +2,704 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Universal GMS Doze</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Universal GMS Doze (Debug)</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@300;400;500&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
   :root {
-    --bg: #0a0a0f;
-    --surface: #111118;
-    --border: #1e1e2e;
-    --accent: #00ff9d;
-    --accent-dim: rgba(0,255,157,0.12);
-    --accent-glow: rgba(0,255,157,0.25);
-    --warn: #ff6b35;
-    --warn-dim: rgba(255,107,53,0.12);
-    --text: #e0e0f0;
-    --text-dim: #606080;
-    --optimized: #00ff9d;
-    --not-optimized: #ff4466;
+    --md-sys-color-background: #101318;
+    --md-sys-color-surface: #101318;
+    --md-sys-color-surface-container-lowest: #0b0e12;
+    --md-sys-color-surface-container-low: #181c22;
+    --md-sys-color-surface-container: #1c2026;
+    --md-sys-color-surface-container-high: #262b33;
+    --md-sys-color-surface-container-highest: #31363f;
+
+    --md-sys-color-primary: #76d89c;
+    --md-sys-color-on-primary: #00391c;
+    --md-sys-color-primary-container: #00522b;
+    --md-sys-color-on-primary-container: #92f5b7;
+
+    --md-sys-color-secondary: #b6ccb8;
+    --md-sys-color-secondary-container: #384b3c;
+    --md-sys-color-on-secondary-container: #d2e8d4;
+
+    --md-sys-color-tertiary: #a2ced9;
+    --md-sys-color-tertiary-container: #204d56;
+    --md-sys-color-on-tertiary-container: #beeaf6;
+
+    --md-sys-color-error: #ffb4ab;
+    --md-sys-color-on-error: #690005;
+    --md-sys-color-error-container: #93000a;
+    --md-sys-color-on-error-container: #ffdad6;
+
+    --md-sys-color-on-surface: #e1e2e8;
+    --md-sys-color-on-surface-variant: #c1c7ce;
+    --md-sys-color-outline: #8b9198;
+    --md-sys-color-outline-variant: #41484d;
+
+    --ease-expressive: cubic-bezier(0.2, 0, 0, 1);
   }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
 
   body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Inter', sans-serif;
+    background: var(--md-sys-color-background);
+    color: var(--md-sys-color-on-surface);
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     font-size: 14px;
+    line-height: 1.5;
     min-height: 100vh;
-    padding: 20px 16px 40px;
+    padding: 20px 16px 88px;
   }
 
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px);
-    pointer-events: none;
-    z-index: 999;
+  .container {
+    max-width: 560px;
+    margin: 0 auto;
   }
 
-  header { margin-bottom: 20px; }
-
-  .logo-line { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
-
-  .logo-dot {
-    width: 8px; height: 8px; border-radius: 50%;
-    background: var(--accent);
-    box-shadow: 0 0 8px var(--accent-glow);
-    animation: pulse 2s ease-in-out infinite;
-  }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 1; box-shadow: 0 0 8px var(--accent-glow); }
-    50% { opacity: 0.5; box-shadow: 0 0 2px var(--accent-glow); }
-  }
-
-  h1 {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 15px; font-weight: 700;
-    color: var(--accent);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  .subtitle {
-    font-size: 11px; color: var(--text-dim);
-    font-family: 'JetBrains Mono', monospace;
-    letter-spacing: 0.04em;
-    padding-left: 18px;
-  }
-
-  /* Tabs */
-  .tabs {
+  header {
     display: flex;
-    gap: 4px;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
     margin-bottom: 20px;
-    border-bottom: 1px solid var(--border);
-    padding-bottom: 0;
+    padding: 4px 2px;
   }
 
-  .tab {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--text-dim);
-    background: none;
-    border: none;
-    border-bottom: 2px solid transparent;
-    padding: 8px 14px;
-    cursor: pointer;
-    margin-bottom: -1px;
-    transition: color 0.2s, border-color 0.2s;
-  }
-
-  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
-  .tab:hover:not(.active) { color: var(--text); }
-
-  .page { display: none; }
-  .page.active { display: block; }
-
-  /* Status card */
-  .status-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 16px;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .status-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--accent), transparent);
-    opacity: 0.4;
-  }
-
-  .status-label {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px; color: var(--text-dim);
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    margin-bottom: 12px;
-  }
-
-  .status-value {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 22px; font-weight: 700;
-    letter-spacing: 0.04em;
-    transition: color 0.3s, text-shadow 0.3s;
-  }
-
-  .status-value.optimized { color: var(--optimized); text-shadow: 0 0 20px rgba(0,255,157,0.4); }
-  .status-value.not-optimized { color: var(--not-optimized); text-shadow: 0 0 20px rgba(255,68,102,0.4); }
-  .status-value.loading { color: var(--text-dim); text-shadow: none; }
-
-  .refresh-btn {
-    position: absolute; top: 16px; right: 16px;
-    background: none; border: 1px solid var(--border);
-    color: var(--text-dim);
-    width: 32px; height: 32px;
-    border-radius: 6px; cursor: pointer;
-    font-size: 14px;
-    display: flex; align-items: center; justify-content: center;
-    transition: border-color 0.2s, color 0.2s;
-  }
-
-  .refresh-btn:hover { border-color: var(--accent); color: var(--accent); }
-  .refresh-btn.spinning { animation: spin 0.6s linear infinite; }
-
-  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
-  .section-title {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px; color: var(--text-dim);
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    margin-bottom: 10px;
-    margin-top: 24px;
-  }
-
-  .actions { display: flex; flex-direction: column; gap: 10px; }
-
-  .action-btn {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 14px 16px;
-    cursor: pointer; text-align: left;
-    transition: border-color 0.2s, background 0.2s;
-    position: relative; overflow: hidden;
-    width: 100%;
-  }
-
-  .action-btn:hover { border-color: var(--accent); background: var(--accent-dim); }
-  .action-btn:active { transform: scale(0.99); }
-  .action-btn.warn:hover { border-color: var(--warn); background: var(--warn-dim); }
-
-  .btn-title {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 13px; font-weight: 600;
-    color: var(--text); margin-bottom: 3px;
-  }
-
-  .btn-desc { font-size: 11px; color: var(--text-dim); line-height: 1.4; }
-
-  .btn-icon {
-    position: absolute; right: 16px; top: 50%;
-    transform: translateY(-50%);
-    font-size: 18px; opacity: 0.4;
-  }
-
-  .output {
-    margin-top: 16px;
-    background: #07070d;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 14px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px; line-height: 1.6;
-    color: var(--text-dim);
-    min-height: 60px; max-height: 200px;
-    overflow-y: auto;
-    white-space: pre-wrap; word-break: break-all;
-    display: none;
-  }
-
-  .output.visible { display: block; }
-  .output .ok { color: var(--accent); }
-  .output .err { color: var(--not-optimized); }
-  .output .info { color: #888; }
-
-  /* App exemptions */
-  .search-input {
-    width: 100%;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 10px 12px;
-    color: var(--text);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12px;
-    outline: none;
-    margin-bottom: 8px;
-    transition: border-color 0.2s;
-  }
-
-  .search-input:focus { border-color: var(--accent); }
-
-  .app-list {
-    max-height: 320px;
-    overflow-y: auto;
+  .brand-wrap {
     display: flex;
     flex-direction: column;
     gap: 6px;
   }
 
-  .app-item {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px 14px;
+  .title-row {
     display: flex;
     align-items: center;
-    gap: 12px;
-    transition: border-color 0.2s;
+    gap: 10px;
   }
 
-  .app-item.exempted { border-color: var(--accent); background: var(--accent-dim); }
+  .brand-badge {
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
 
-  .app-item-info { flex: 1; min-width: 0; }
+  h1 {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--md-sys-color-on-surface);
+  }
+
+  .subtitle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--md-sys-color-on-surface-variant);
+    background: var(--md-sys-color-surface-container);
+    padding: 4px 12px;
+    border-radius: 9999px;
+    width: fit-content;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 6px;
+    background: var(--md-sys-color-surface-container);
+    padding: 5px;
+    border-radius: 9999px;
+    margin-bottom: 20px;
+  }
+
+  .tab {
+    flex: 1;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--md-sys-color-on-surface-variant);
+    background: transparent;
+    border: none;
+    border-radius: 9999px;
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: background-color 0.25s var(--ease-expressive), color 0.25s var(--ease-expressive), transform 0.15s var(--ease-expressive);
+  }
+
+  .tab:active { transform: scale(0.97); }
+
+  .tab.active {
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+  }
+
+  .tab:hover:not(.active) {
+    background: var(--md-sys-color-surface-container-high);
+    color: var(--md-sys-color-on-surface);
+  }
+
+  .page {
+    display: none;
+    animation: fadeSlide 0.25s var(--ease-expressive);
+  }
+
+  .page.active { display: block; }
+
+  @keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .status-card {
+    background: var(--md-sys-color-surface-container-low);
+    border-radius: 28px;
+    padding: 22px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    transition: background-color 0.3s var(--ease-expressive);
+  }
+
+  .status-card.is-optimized {
+    background: linear-gradient(135deg, rgba(0, 82, 43, 0.42), var(--md-sys-color-surface-container-low) 70%);
+  }
+
+  .status-card.is-not-optimized {
+    background: linear-gradient(135deg, rgba(147, 0, 10, 0.38), var(--md-sys-color-surface-container-low) 70%);
+  }
+
+  .status-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .status-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 18px;
+    display: grid;
+    place-items: center;
+    background: var(--md-sys-color-surface-container-high);
+    color: var(--md-sys-color-on-surface-variant);
+    flex-shrink: 0;
+  }
+
+  .status-card.is-optimized .status-icon {
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+  }
+
+  .status-card.is-not-optimized .status-icon {
+    background: var(--md-sys-color-error-container);
+    color: var(--md-sys-color-on-error-container);
+  }
+
+  .status-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .status-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--md-sys-color-on-surface-variant);
+  }
+
+  .status-value {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--md-sys-color-on-surface);
+  }
+
+  .status-value.optimized { color: var(--md-sys-color-primary); }
+  .status-value.not-optimized { color: var(--md-sys-color-error); }
+  .status-value.checking { color: var(--md-sys-color-on-surface-variant); }
+
+  .icon-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 16px;
+    border: none;
+    background: var(--md-sys-color-surface-container-high);
+    color: var(--md-sys-color-on-surface);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background-color 0.2s var(--ease-expressive), transform 0.15s var(--ease-expressive);
+  }
+
+  .icon-btn:hover { background: var(--md-sys-color-surface-container-highest); }
+  .icon-btn:active { transform: scale(0.92); }
+  .icon-btn.spinning svg { animation: spin 0.8s linear infinite; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .section-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--md-sys-color-primary);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin: 20px 6px 10px;
+  }
+
+  .action-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .action-card {
+    width: 100%;
+    text-align: left;
+    background: var(--md-sys-color-surface-container);
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    border-radius: 22px;
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    color: inherit;
+    font-family: inherit;
+    transition: background-color 0.2s var(--ease-expressive), transform 0.15s var(--ease-expressive);
+  }
+
+  .action-card:hover { background: var(--md-sys-color-surface-container-high); }
+  .action-card:active { transform: scale(0.985); }
+
+  .action-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+
+  .action-icon.tertiary {
+    background: var(--md-sys-color-tertiary-container);
+    color: var(--md-sys-color-on-tertiary-container);
+  }
+
+  .action-body { flex: 1; min-width: 0; }
+
+  .action-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--md-sys-color-on-surface);
+    margin-bottom: 2px;
+  }
+
+  .action-desc {
+    font-size: 12px;
+    color: var(--md-sys-color-on-surface-variant);
+    line-height: 1.4;
+  }
+
+  .action-chevron { color: var(--md-sys-color-on-surface-variant); flex-shrink: 0; }
+
+  .output-box {
+    display: none;
+    margin-top: 16px;
+    background: var(--md-sys-color-surface-container-lowest);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: 20px;
+    padding: 14px 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    line-height: 1.55;
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 320px;
+    overflow-y: auto;
+  }
+
+  .output-box.visible {
+    display: block;
+    animation: fadeSlide 0.2s var(--ease-expressive);
+  }
+
+  .output-box .ok { color: var(--md-sys-color-primary); }
+  .output-box .err { color: var(--md-sys-color-error); }
+  .output-box .info { color: var(--md-sys-color-on-surface-variant); }
+
+  .search-wrap {
+    position: relative;
+    margin-bottom: 14px;
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--md-sys-color-on-surface-variant);
+    pointer-events: none;
+  }
+
+  .search-input {
+    width: 100%;
+    background: var(--md-sys-color-surface-container-high);
+    border: 1px solid transparent;
+    border-radius: 28px;
+    padding: 13px 18px 13px 46px;
+    color: var(--md-sys-color-on-surface);
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s var(--ease-expressive), background-color 0.2s var(--ease-expressive);
+  }
+
+  .search-input::placeholder { color: var(--md-sys-color-on-surface-variant); }
+  .search-input:focus {
+    border-color: var(--md-sys-color-primary);
+    background: var(--md-sys-color-surface-container-highest);
+  }
+
+  .app-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .app-item {
+    background: var(--md-sys-color-surface-container);
+    border-radius: 20px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.03);
+  }
+
+  .app-item.exempted {
+    background: var(--md-sys-color-surface-container-high);
+    border-color: rgba(118, 216, 156, 0.22);
+  }
+
+  .app-item-info { min-width: 0; flex: 1; }
 
   .app-item-name {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12px; font-weight: 600;
-    color: var(--text);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--md-sys-color-on-surface);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .app-item-pkg {
-    font-size: 10px; color: var(--text-dim);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--md-sys-color-on-surface-variant);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .app-toggle {
-    width: 36px; height: 20px;
-    border-radius: 10px; border: none;
-    cursor: pointer; position: relative;
-    transition: background 0.2s;
+    position: relative;
+    width: 52px;
+    height: 32px;
+    border-radius: 9999px;
+    border: 2px solid var(--md-sys-color-outline);
+    background: var(--md-sys-color-surface-container-highest);
+    cursor: pointer;
     flex-shrink: 0;
-    background: var(--border);
+    transition: background-color 0.25s var(--ease-expressive), border-color 0.25s var(--ease-expressive);
   }
-
-  .app-toggle.on { background: var(--accent); }
 
   .app-toggle::after {
     content: '';
     position: absolute;
-    width: 14px; height: 14px;
+    left: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
     border-radius: 50%;
-    background: white;
-    top: 3px; left: 3px;
-    transition: transform 0.2s;
+    background: var(--md-sys-color-outline);
+    transition: transform 0.25s var(--ease-expressive), width 0.2s var(--ease-expressive), height 0.2s var(--ease-expressive), background-color 0.25s var(--ease-expressive);
   }
 
-  .app-toggle.on::after { transform: translateX(16px); }
+  .app-toggle.on {
+    background: var(--md-sys-color-primary);
+    border-color: var(--md-sys-color-primary);
+  }
+
+  .app-toggle.on::after {
+    width: 24px;
+    height: 24px;
+    left: 2px;
+    transform: translate(22px, -50%);
+    background: var(--md-sys-color-on-primary);
+  }
+
   .app-toggle:disabled { opacity: 0.5; cursor: wait; }
 
-  footer {
-    margin-top: 36px;
-    text-align: center;
-    font-size: 10px; color: var(--text-dim);
-    font-family: 'JetBrains Mono', monospace;
-    letter-spacing: 0.06em;
+  /* Debug Button Row */
+  .btn-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
   }
 
-  footer a { color: var(--accent); text-decoration: none; opacity: 0.7; }
+  .tonal-btn {
+    flex: 1;
+    min-width: 110px;
+    border: none;
+    border-radius: 9999px;
+    padding: 12px 16px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+    cursor: pointer;
+    transition: background-color 0.2s var(--ease-expressive), transform 0.15s var(--ease-expressive);
+  }
+
+  .tonal-btn.primary {
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+  }
+
+  .tonal-btn.danger {
+    background: var(--md-sys-color-error-container);
+    color: var(--md-sys-color-on-error-container);
+  }
+
+  .tonal-btn:active { transform: scale(0.97); }
+
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: #e1e2e8;
+    color: #181c22;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 12px 20px;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.3s var(--ease-expressive), opacity 0.3s var(--ease-expressive);
+    z-index: 1000;
+    max-width: calc(100vw - 32px);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 </style>
 </head>
 <body>
-
-<header>
-  <div class="logo-line">
-    <div class="logo-dot"></div>
-    <h1>Universal GMS Doze</h1>
-  </div>
-  <div class="subtitle" id="subtitle">loading...</div>
-</header>
-
-<!-- Tab navigation -->
-<div class="tabs">
-  <button class="tab active" onclick="showPage('home', this)">Home</button>
-  <button class="tab" onclick="showPage('exemptions', this)">Exemptions</button>
-  <button class="tab" onclick="showPage('debug', this)">Debug</button>
-</div>
-
-<!-- Page: Home -->
-<div class="page active" id="page-home">
-
-  <div class="status-card">
-    <div class="status-label">GMS Optimization Status</div>
-    <div class="status-value loading" id="statusValue">Checking...</div>
-    <button class="refresh-btn" id="refreshBtn" onclick="checkStatus()" title="Refresh">↻</button>
-  </div>
-
-  <div class="section-title">Actions</div>
-  <div class="actions">
-
-    <button class="action-btn" onclick="runAction('fix_messages')">
-      <div class="btn-title">Fix Delayed Messages</div>
-      <div class="btn-desc">Clears cached GMS data that causes delayed notifications</div>
-      <span class="btn-icon">🧹</span>
-    </button>
-
-    <button class="action-btn" id="fmdBtn" onclick="toggleFmd()">
-      <div class="btn-title" id="fmdTitle">Find My Device</div>
-      <div class="btn-desc" id="fmdDesc">Checking status...</div>
-      <span class="btn-icon">📍</span>
-    </button>
-
-    <button class="action-btn warn" onclick="runAction('force_doze')">
-      <div class="btn-title">Force Re-apply Optimization</div>
-      <div class="btn-desc">Removes GMS from Doze whitelist manually right now</div>
-      <span class="btn-icon">⚡</span>
-    </button>
-
-  </div>
-
-  <div class="output" id="output"></div>
-
-</div>
-
-<!-- Page: Exemptions -->
-<div class="page" id="page-exemptions">
-
-  <div style="font-size:11px; color:var(--text-dim); margin-bottom:12px; line-height:1.6;">
-    Exempted apps bypass Doze and background restrictions for reliable push notifications.
-    Settings are saved and re-applied on every boot.
-  </div>
-
-  <input type="text" class="search-input" id="appSearch" placeholder="Search apps..." oninput="filterApps()">
-
-  <div class="app-list" id="appList">
-    <div style="color:var(--text-dim); font-size:11px; font-family:'JetBrains Mono',monospace; padding:8px;">
-      Loading apps...
+<div class="container">
+  <header>
+    <div class="brand-wrap">
+      <div class="title-row">
+        <div class="brand-badge">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="m9 12 2 2 4-4"/>
+          </svg>
+        </div>
+        <h1>Universal GMS Doze</h1>
+      </div>
+      <div class="subtitle" id="subtitle">Loading...</div>
     </div>
-  </div>
+  </header>
 
-</div>
+  <nav class="tabs" role="tablist">
+    <button class="tab active" onclick="switchTab('overview', this)">Overview</button>
+    <button class="tab" onclick="switchTab('exemptions', this)">Exemptions</button>
+    <button class="tab" onclick="switchTab('debug', this)">Debug</button>
+  </nav>
 
-
-<!-- Page: Debug -->
-<div class="page" id="page-debug">
-  <div style="font-size:11px; color:var(--text-dim); margin-bottom:12px; line-height:1.6;">
-    Debug log stored at <code style="color:var(--accent)">/data/adb/modules/universal-gms-doze/debug.log</code>
-  </div>
-  <div class="actions" style="margin-bottom:12px;">
-    <div style="display:flex; gap:8px;">
-      <button class="action-btn" style="flex:1; padding:12px;" onclick="viewDebugLog()">
-        <div class="btn-title" style="font-size:12px;">👁 View Log</div>
-      </button>
-      <button class="action-btn" style="flex:1; padding:12px;" onclick="exportDebugLog()">
-        <div class="btn-title" style="font-size:12px;">📤 Export</div>
+  <!-- Overview Page -->
+  <section class="page active" id="page-overview">
+    <div class="status-card" id="statusCard">
+      <div class="status-left">
+        <div class="status-icon" id="statusIcon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 6v6l4 2"/>
+          </svg>
+        </div>
+        <div class="status-meta">
+          <span class="status-label">Google Play Services</span>
+          <span class="status-value checking" id="statusValue">Checking...</span>
+        </div>
+      </div>
+      <button class="icon-btn" id="refreshBtn" onclick="checkStatus()" title="Refresh status" aria-label="Refresh status">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/>
+          <path d="M21 3v5h-5"/>
+        </svg>
       </button>
     </div>
-    <button class="action-btn warn" onclick="clearDebugLog()">
-      <div class="btn-title">🗑 Clear Log</div>
-      <div class="btn-desc">Delete debug.log from module folder</div>
-    </button>
-  </div>
-  <div class="output" id="debugLog" style="max-height:400px; display:none;"></div>
+
+    <div class="section-title">Quick Actions</div>
+    <div class="action-list">
+      <button class="action-card" onclick="runAction('force_doze')">
+        <div class="action-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/>
+          </svg>
+        </div>
+        <div class="action-body">
+          <div class="action-title">Force GMS Doze</div>
+          <div class="action-desc">Remove com.google.android.gms from deviceidle whitelist</div>
+        </div>
+        <svg class="action-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+      </button>
+
+      <button class="action-card" onclick="runAction('fix_messages')">
+        <div class="action-icon tertiary">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+          </svg>
+        </div>
+        <div class="action-body">
+          <div class="action-title">Clear GMS Cache</div>
+          <div class="action-desc">Delete cached GMS files in /data/data to fix delayed notifications</div>
+        </div>
+        <svg class="action-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+      </button>
+
+      <button class="action-card" id="fmdBtn" onclick="toggleFmd()">
+        <div class="action-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
+          </svg>
+        </div>
+        <div class="action-body">
+          <div class="action-title" id="fmdTitle">Find My Device</div>
+          <div class="action-desc" id="fmdDesc">Checking MdmDeviceAdminReceiver state...</div>
+        </div>
+        <svg class="action-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+      </button>
+    </div>
+
+    <div class="output-box" id="output"></div>
+  </section>
+
+  <!-- Exemptions Page -->
+  <section class="page" id="page-exemptions">
+    <div class="search-wrap">
+      <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+      </svg>
+      <input type="text" class="search-input" id="appSearch" placeholder="Search installed apps..." oninput="filterApps()">
+    </div>
+    <div class="app-list" id="appList">
+      <div style="color:var(--md-sys-color-on-surface-variant);font-size:13px;padding:12px;">Loading apps...</div>
+    </div>
+  </section>
+
+  <!-- Debug Page -->
+  <section class="page" id="page-debug">
+    <div class="btn-row">
+      <button class="tonal-btn primary" onclick="viewDebugLog()">View Log</button>
+      <button class="tonal-btn" onclick="exportDebugLog()">Export to /sdcard</button>
+      <button class="tonal-btn danger" onclick="clearDebugLog()">Clear Log</button>
+    </div>
+    <div class="output-box" id="debugLog"></div>
+  </section>
 </div>
 
-<footer>
-  fork of <a href="https://github.com/gloeyisk/universal-gms-doze">gloeyisk/universal-gms-doze</a>
-  · <a href="https://github.com/MarsPatrick/universal-gms-doze">source</a>
-</footer>
+<div class="toast" id="toast"></div>
 
 <script>
 const MOD = '/data/adb/modules/universal-gms-doze';
-const CONFIG = MOD + '/exemptions.conf';
+const CONFIG = `${MOD}/exemptions.conf`;
 
-let _cbId = 0;
 function exec(cmd) {
   return new Promise((resolve, reject) => {
-    const cb = `_ksu_cb_${Date.now()}_${_cbId++}`;
-    window[cb] = (errno, stdout, stderr) => { delete window[cb]; resolve({ errno, stdout, stderr }); };
-    try { ksu.exec(cmd, '{}', cb); }
-    catch(e) { delete window[cb]; reject(e); }
+    if (typeof ksu !== 'undefined' && ksu.exec) {
+      const cb = 'cb_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+      window[cb] = (errno, stdout, stderr) => {
+        delete window[cb];
+        resolve({ errno, stdout: stdout || '', stderr: stderr || '' });
+      };
+      ksu.exec(cmd, '{}', cb);
+    } else {
+      reject('KernelSU WebUI API not available');
+    }
   });
 }
 
-function toast(msg) { try { ksu.toast(msg); } catch(e) { console.log(msg); } }
-function escapeHtml(str) { return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escapeHtml(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
 
-// ── Navigation ────────────────────────────────────────────────
-window.showPage = function(id, tab) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+window.switchTab = function(name, btn) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('page-' + id).classList.add('active');
-  tab.classList.add('active');
-  if (id === 'exemptions' && allApps.length === 0) loadApps();
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('page-' + name).classList.add('active');
+  if (name === 'exemptions' && allApps.length === 0) loadApps();
 };
 
-// ── Home page ─────────────────────────────────────────────────
 window.checkStatus = async function() {
   const btn = document.getElementById('refreshBtn');
   const val = document.getElementById('statusValue');
+  const card = document.getElementById('statusCard');
+  const icon = document.getElementById('statusIcon');
   btn.classList.add('spinning');
-  val.className = 'status-value loading';
+  val.className = 'status-value checking';
   val.textContent = 'Checking...';
+  card.classList.remove('is-optimized', 'is-not-optimized');
   try {
-    const { stdout } = await exec('dumpsys deviceidle whitelist 2>/dev/null | grep com.google.android.gms | head -1');
-    val.className = stdout.trim() === '' ? 'status-value optimized' : 'status-value not-optimized';
-    val.textContent = stdout.trim() === '' ? '✓ Optimized' : '✗ Not Optimized';
+    const { stdout } = await exec('dumpsys deviceidle whitelist | grep -E "com\\.google\\.android\\.gms([^.]|$)"');
+    const optimized = stdout.trim() === '';
+    val.className = 'status-value ' + (optimized ? 'optimized' : 'not-optimized');
+    val.textContent = optimized ? 'Optimized' : 'Not Optimized';
+    card.classList.add(optimized ? 'is-optimized' : 'is-not-optimized');
+    icon.innerHTML = optimized
+      ? '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>'
+      : '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
   } catch(e) {
     val.className = 'status-value not-optimized';
     val.textContent = 'Error';
+    card.classList.add('is-not-optimized');
   }
   btn.classList.remove('spinning');
 };
@@ -531,21 +786,18 @@ async function loadApps() {
       .filter(Boolean)
       .sort();
 
-    // Exempted = saved in config OR currently active in whitelist
     allApps = pkgs.map(pkg => ({ pkg, exempted: saved.has(pkg) || active.has(pkg) }));
-
-    // Sort: exempted first
     allApps.sort((a, b) => (b.exempted ? 1 : 0) - (a.exempted ? 1 : 0));
     renderApps(allApps);
   } catch(e) {
-    list.innerHTML = `<div style="color:var(--not-optimized);font-size:11px;padding:8px;">Error: ${escapeHtml(e)}</div>`;
+    list.innerHTML = `<div style="color:var(--md-sys-color-error);font-size:12px;padding:12px;">Error: ${escapeHtml(e)}</div>`;
   }
 }
 
 function renderApps(apps) {
   const list = document.getElementById('appList');
   if (!apps.length) {
-    list.innerHTML = '<div style="color:var(--text-dim);font-size:11px;padding:8px;">No apps found</div>';
+    list.innerHTML = '<div style="color:var(--md-sys-color-on-surface-variant);font-size:12px;padding:12px;">No apps found</div>';
     return;
   }
   list.innerHTML = apps.map(({ pkg, exempted }) => {
@@ -585,10 +837,8 @@ window.toggleApp = async function(pkg, btn) {
     app.exempted = adding;
     btn.classList.toggle('on', adding);
     item.classList.toggle('exempted', adding);
-    // Save updated config
     const exempted = new Set(allApps.filter(a => a.exempted).map(a => a.pkg));
     await saveConfig(exempted);
-    // Clear GMS cache after changing exemptions
     await exec("cd /data/data && find . -type f -name '*gms*' -delete 2>/dev/null");
     toast(adding ? `${pkg} exempted` : `${pkg} restored`);
   } catch(e) { toast('Error: ' + e); }
@@ -630,7 +880,7 @@ window.viewDebugLog = async function() {
 window.exportDebugLog = async function() {
   try {
     const dest = '/sdcard/ugd_debug.log';
-    const { errno, stdout, stderr } = await exec('cp "' + DEBUG_LOG + '" "' + dest + '" 2>&1 && echo "Exported to ' + dest + '"');
+    const { errno } = await exec('cp "' + DEBUG_LOG + '" "' + dest + '" 2>&1 && echo "Exported to ' + dest + '"');
     toast(errno === 0 ? 'Exported to ' + dest : 'Export failed');
   } catch(e) { toast('Error: ' + e); }
 };
@@ -645,8 +895,6 @@ window.clearDebugLog = async function() {
     toast('Log cleared.');
   } catch(e) { toast('Error: ' + e); }
 };
-
 </script>
-
 </body>
 </html>
